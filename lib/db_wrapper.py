@@ -15,20 +15,29 @@ class db_wrapper:
     def create_table(self, table):
         print("Creating table for: ", table)
         sql = """create table if not exists \"""" + table + """\" (
-                id INTEGER,
                 date text(10),
                 open real,
                 close real,
                 high real,
                 low real,
                 volume INTEGER,
-                CONSTRAINT NOW_PK PRIMARY KEY (id)
+                CONSTRAINT NOW_PK PRIMARY KEY (date)
                 ) """
         self.cursor.execute(sql)
     #end create_table
 
-    def insert_row(self, table, rows):
-        sql = "INSERT INTO \"{0}\" (\"date\", \"open\", \"close\", \"high\", \"low\", \"volume\") VALUES (?,?,?,?,?,?) ".format(table)
+    def insert_row(self, table, rows, date):
+        sql = "INSERT OR REPLACE INTO \"{0}\" (\"date\", \"open\", \"close\", \"high\", \"low\", \"volume\") VALUES (?,?,?,?,?,?) ".format(table)
         self.cursor.executemany(sql, rows)
         self.connection.commit()
+        sql = "INSERT OR REPLACE INTO \"monitor\" (\"symbol\", \"synch_date\") VALUES (\"{0}\", \"{1}\") ".format(table, date)
+        self.cursor.execute(sql)
+        self.connection.commit()
     #end db_wrapper
+
+    def get_monitor_status(self):
+        sql = "SELECT * FROM monitor"
+        self.cursor.execute(sql)
+        return self.cursor.fetchall()
+
+    #end get_monitor_status
